@@ -13,7 +13,7 @@ standard library.
 - `int`
 
 `int` represents all sorts of signed integers. It is 64-bits wide, and can
-contain values from -9 223 372 036 854 775 808 to 9 223 372 036 854 775 807.
+contain values from `-9 223 372 036 854 775 808` to `9 223 372 036 854 775 807`.
 
 - `float`
 
