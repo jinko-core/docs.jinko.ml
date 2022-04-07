@@ -19,7 +19,7 @@ Feel free to ask about anything on our #dev and #off-topic channels. We're
 aware that the documentation might not be in a clear enough state for new
 programmers!
 
-## Link
+## Links
 
 * [Repository](https://github.com/jinko-core/jinko)
 * [GitHub organization](https://github.com/jinko-core)
