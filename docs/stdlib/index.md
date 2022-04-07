@@ -1,3 +1,0 @@
-# stdlib documentation
-
-## stdlib modules

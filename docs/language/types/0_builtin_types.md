@@ -1,10 +1,4 @@
-# Types
-
-Types are a central concept of the jinko programming language. Most of the
-final implementation of the language will rely on the typechecker in order to
-provide safe wrappers on data or concepts.
-
-## built-in types
+# Built-in types
 
 4 types are baked in the interpreter: `bool`, `int`, `float`, `string` and
 `char`. Each of these types has associated functions, which can be found in the
@@ -34,7 +28,7 @@ type bool(true | false);
 
 - `char`
 
-`char`s are simple UTF-8 characters
+`char`s are simple UTF-8 characters.
 
 - `string`
 
@@ -42,26 +36,3 @@ In `jinko`, strings are not simply arrays of characters, at least for now. We
 rely on Rust's `String` implementation in order to have the `string` type. This
 is subject to change, and will obviously be different once the interpreter is
 self-hosted.
-
-## Custom types
-
-"Custom types" refer to types defined by the programmer. You can find a handful
-of them in the standard library, such as `jinko`'s optional or result type:
-
-```rust
-type Nothing;
-type Maybe[T](T | Nothing);
-
-type Ok[T](with: T);
-type Err[E](cause: E);
-type Result[T, E](Ok[T] | Err[E]);
-```
-
-You can find out more about them [here](types/0_custom_types.md).
-
-## Type conditions
-
-When instantiating a value, a type's author can require that you uphold certain
-contracts.
-
-[Read more about contract programming in jinko](types/1_contract.md).
