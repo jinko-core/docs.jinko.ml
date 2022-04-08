@@ -281,3 +281,67 @@ func push[T](v: Vec[T], elt: T) {
 v = create_vec[int](); // OK
 v.push[int](14);
 ```
+
+## Generating specialized inner nodes
+
+Nodes defined inside other nodes need to be handled as well
+
+```rust
+func id[T](input: T) -> T {
+	func inner_id[T](input: T) -> T {
+		input
+	};
+
+	inner_id[T](input)
+}
+
+id[int](15)
+```
+
+```rust
+func id+int(input: int) -> int {
+    // Here in expansion phase
+}
+
+func id[T](input: T) -> T {
+    func inner_id[T](input: T) -> T {
+	  input
+    };
+
+    inner_id[T](input)
+}
+
+id[int](15)
+```
+
+At this point in the expansion phase, we are in a `resolve-usages` phase.
+Meaning that we are simply trying to replace usages of generic types with their
+resolved counter points, changing from `T` to `int` in that case. However for
+the function declaration, we need to create a new definition using the resolved
+type: This is a `resolve-expand` phase of the expansion.
+
+We can maybe simply make it so that having a `FunctionDeclaration` in a
+`resolve-usages` context creates a new function and adds it as a specialized
+node
+
+```rust
+func inner_id+int(input: int) -> int {
+    input
+}
+
+func id+int(input: int) -> int {
+    // Remove the declaration node? Just declare it still?
+
+    inner_id+int(input)
+}
+
+func id[T](input: T) -> T {
+    func inner_id[T](input: T) -> T {
+	  input
+    };
+
+    inner_id[T](input)
+}
+
+id[int](15)
+```
