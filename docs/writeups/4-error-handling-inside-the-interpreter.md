@@ -48,7 +48,7 @@ Let's take the following jinko instruction
 func add(lhs: int, rhs: int) -> int { lhs + rhs }
 
 a = 15.add(14).add("5").add(27)
-//		   ^ type error
+//             ^ type error
 ```
 
 In the above example, there's a type error: We're trying to give a string to a
