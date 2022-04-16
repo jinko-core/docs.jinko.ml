@@ -345,3 +345,146 @@ func id[T](input: T) -> T {
 
 id[int](15)
 ```
+
+## User Specialization
+
+### Choosing specialized items
+
+When calling functions or types, the user may want to call a specialized
+version of the item. For example, with the `Maybe` type declared as so
+```rust
+type Maybe[T](T | Nothing);
+```
+One could want to declare a function or a type which only accepts a specialized
+version of this optional type. This can be seen in builder patterns for example:
+```rust
+type Parser;
+type TypeChecker;
+type Generics;
+type Hint;
+
+type Location(file: string, line: int, col: int);
+type Span(start: Location, end: Maybe[Location] = Nothing);
+//                         ^ specialized usage
+
+type Error(
+    kind: Parser | TypeChecker | Generics | Hint,
+    msg: Maybe[string] = Nothing,    // specialized usage
+    exit_code: Maybe[int] = Nothing, // specialized usage
+    loc: Maybe[Span] = Nothing,      // specialized usage
+    hints: Vector[Error] = Vector(), // specialized usage
+);
+```
+
+<details>
+
+<summary>Rest of the builder pattern implementation</summary>
+
+```rust
+
+func with_end(span: Span, end: Location) -> Span {
+    // Gets promoted to a Maybe[Location] thanks to multi types
+    Span(start: span.start, end: end)
+}
+
+func hint() -> Error {
+    Error(kind: Hint)
+}
+
+func with_msg(e: Error, msg: string) -> Error {
+    Error(
+        kind: e.kind,
+        msg: msg,
+        exit_code: e.exit_code,
+        loc: e.loc,
+        hints: e.hints
+    )
+} // And so on for `exit_code` and `loc`
+
+func with_hint(e: Error, hint: Error) -> Error {
+    Error(
+        kind: e.kind,
+        msg: e.msg,
+        exit_code: e.exit_code,
+        loc: e.loc,
+        hints: e.hints.append(hint)
+    )
+}
+
+e = Error(kind: TypeChecker)
+      .with_msg("something went wrong!")
+      .with_hint(hint().with_msg("a hint"))
+      .with_hint(hint().with_msg("hint message #2!"));
+```
+
+</summary>
+</details>
+
+The hard part about implementing "specialization usage" for types is that they
+are easily confused with a generic type declaration. What is the difference
+between `Maybe[T]` and `Maybe[int]` in the eye of the interpreter?
+
+Let's take a few examples:
+
+```rust
+func f1[T](maybe_t: Maybe[T]) {} // Generic `Maybe`
+func f2[T](maybe_t: Maybe[string]) {} // Specialized `Maybe`
+// -> `string` is not in the generic list
+func f3(maybe_t: Maybe[T]) {} // Specialized `Maybe`
+// -> typechecker error later on: T is undeclared
+```
+
+We can check whether or not the type's generic is present in the function's given
+generic list. Let's add another type to our current file:
+
+```rust
+type Tuple3[T1, T2, T3](f: T1, s: T2, t: T3);
+```
+
+A fully generic version of this type would appear as follows in the interpreter:
+```rust
+tuple3 = TypeId {
+    id: "Tuple3",
+    generics: [T1, T2, T3]
+}
+```
+while a fully specialized version (`Tuple3[int, string, float]`) would look like so:
+```rust
+tuple3 = TypeId {
+    id: "Tuple3+int+string+float"
+    generics: []
+}
+```
+
+But we could have an *intermediate* version: One that would contains generics while
+still being mangled
+```rust
+func half_specialized_tuple[T](t: Tuple3[T, string, float]) {}
+
+half_specialized_tuple[float](Tuple3(f: 14.4, s: "hey", t: 14.0));
+half_specialized_tuple[string](Tuple3(f: "jinko", s: "language", t: 0.3));
+```
+
+The type in the function declaration would be a hybrid between a generic type and a
+fully specialized one. Something like a "delayed specialized" type, where its
+full specialization will happen further down the type resolution pass.
+
+```rust
+tuple3 = TypeId {
+    id: "Tuple+string+float"
+    generics: [T]
+}
+```
+
+This highlights a fun issue in our mangler! We need to also specify the position
+of the specialized type to make sure we can then rebuild the type properly.
+
+If all goes well, we should not have to implement any further logic in our
+generic resolver/specializer.
+
+### Declaring specialized items
+
+We must allow the user to specialize their own version of the generic declaration.
+
+### How to choose the user specialized instead of our specialize
+### Not generating stuff multiple time
